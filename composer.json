@@ -3,10 +3,10 @@
     "description": "Test",
     "require": {
         "symfony/process": "^3.0",
-        "silex/silex": "^1.3",
+        "symfony/flex": "*",
         "twig/twig": "^1.24",
         "react/http": "^0.4.1",
-        "phpoffice/phpexcel": "^1.8",
+        "phpoffice/phpspreadsheet": "*",
         "google/apiclient": "^2.0",
         "cache/filesystem-adapter": "^0.3.3"
     },
