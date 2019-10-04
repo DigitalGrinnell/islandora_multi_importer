@@ -3,8 +3,8 @@
 /**
  * @file
  * includes/utilities.inc
- * 
- * Contains Parsing/Processing utilities 
+ *
+ * Contains Parsing/Processing utilities
  * @author Diego Pino Navarro
  */
 
@@ -36,8 +36,8 @@ function islandora_multi_importer_datasource_loader(array $form_state, $page = 0
     $range = trim($form_state['storage']['values']['step2']['google_api']['spreadsheet_range']);
     //dpm($range);
     $file_data = islandora_multi_importer_read_googledata($spreadsheetId, $range, $per_page, $page * $per_page);
-   
-  } 
+
+  }
   else {
     $file = file_load($form_state['storage']['values']['step1']['file']);
     $file_path = drupal_realpath($file->uri);
@@ -60,13 +60,13 @@ function islandora_multi_importer_datasource_loader(array $form_state, $page = 0
  *   array of associative arrays containing header and data as header => value pairs
  */
 function islandora_multi_importer_read_filedata($file_path, $numrows = 20, $offset = 0) {
-  
+
   $tabdata = array('headers' => array(), 'data' => array(), 'totalrows' => 0);
   try {
     $inputFileType = PHPExcel_IOFactory::identify($file_path);
-  
+
     $objReader = PHPExcel_IOFactory::createReader($inputFileType);
-   
+
     $objReader->setReadDataOnly(true);
     $objPHPExcel = $objReader->load($file_path);
   } catch(Exception $e) {
@@ -77,7 +77,7 @@ function islandora_multi_importer_read_filedata($file_path, $numrows = 20, $offs
   $headers = array();
   $maxRow = 0;
   $worksheet = $objPHPExcel->getActiveSheet();
-  $highestRow =  $worksheet->getHighestRow(); 
+  $highestRow =  $worksheet->getHighestRow();
   $highestColumn =  $worksheet->getHighestColumn();
   if (($highestRow)>1) {
     // Returns Row Headers.
@@ -87,7 +87,7 @@ function islandora_multi_importer_read_filedata($file_path, $numrows = 20, $offs
     $rowHeaders_utf8=array_map('strtolower',$rowHeaders_utf8);
     $rowHeaders_utf8=array_map('trim',$rowHeaders_utf8);
     foreach ($worksheet->getRowIterator() as $row) {
-        $rowindex = $row->getRowIndex(); 
+        $rowindex = $row->getRowIndex();
         if (($rowindex > 1) && ($rowindex > ($offset)) && (($rowindex <=($offset + $numrows +1)) || $numrows == -1 )) {
           $rowdata = array();
           // gets one row data
@@ -100,8 +100,14 @@ function islandora_multi_importer_read_filedata($file_path, $numrows = 20, $offs
             break;
           }
           $table[$rowindex] = $datarow[0];
-          }
-      $maxRow = $rowindex;
+          // MAM...if a row begins with a hashtag, it's a comment...skip it
+          // This partially addresses https://github.com/mnylc/islandora_multi_importer/issues/15
+          if ($flat[0] != '#') {
+            $table[$rowindex] = $row[0];
+            $maxRow = $rowindex;
+          } 
+      // $maxRow = $rowindex;    MAM...removed as part of change which begins 6 lines above.
+        }
       }
   }
   $tabdata = array('headers' =>  $rowHeaders_utf8, 'data' => $table, 'totalrows'=> $maxRow);
@@ -127,8 +133,8 @@ function islandora_multi_importer_read_filedata($file_path, $numrows = 20, $offs
     $tabdata = array('headers' => array(), 'data' => array(), 'totalrows' => 0);
     $sp_data = array();
     $rowdata = array();
-     
-    
+
+
     // Establish a connection first
     $client = islandora_multi_importer_googleclient_connect();
     try {
@@ -150,29 +156,29 @@ function islandora_multi_importer_read_filedata($file_path, $numrows = 20, $offs
     $headers = array();
     $maxRow = 0;
     $highestRow =  count($sp_data);
-    
+
     $rowHeaders = $sp_data[0];
     $rowHeaders_utf8=array_map('stripslashes',$rowHeaders);
     $rowHeaders_utf8=array_map('utf8_encode',$rowHeaders_utf8);
     $rowHeaders_utf8=array_map('strtolower',$rowHeaders_utf8);
     $rowHeaders_utf8=array_map('trim',$rowHeaders_utf8);
-    
+
     $headercount = count($rowHeaders);
 
     if (($highestRow) >=1 ) {
       // Returns Row Headers.
-    
+
       $maxRow = 1; // at least until here.
       foreach ($sp_data as $rowindex => $row) {
-       
+
         // Google Spreadsheets start with Index 0. But PHPEXCEL, parent`s
         // function does with 1.
-        // To keep both function responses in sync using the same params, i will compensate offsets here: 
-          
+        // To keep both function responses in sync using the same params, i will compensate offsets here:
+
           if (($rowindex >= 1) && ($rowindex > ($offset-1)) && (($rowindex <=($offset + $numrows)) || $numrows == -1 )) {
             $rowdata = array();
             // gets one row data
-            
+
             $flat = trim(implode('', $row));
             //check for empty row...if found stop there.
             if (strlen($flat) == 0) {
@@ -186,7 +192,7 @@ function islandora_multi_importer_read_filedata($file_path, $numrows = 20, $offs
         }
     }
   $tabdata = array('headers' => $rowHeaders_utf8, 'data' => $table, 'totalrows'=> $maxRow);
-  
+
   return $tabdata;
 }
 
@@ -214,7 +220,7 @@ function islandora_multi_importer_xml_highlight($s){
    * @return mixed
    *   One of these possibilities:
    *   - If remote and exists a Drupal file object
-   *   - If not remote and exists a stripped file object 
+   *   - If not remote and exists a stripped file object
    *   - If does not exist boolean FALSE
    */
 function islandora_multi_importer_remote_file_get($url) {
@@ -226,8 +232,8 @@ function islandora_multi_importer_remote_file_get($url) {
       $path = module_invoke_all('islandora_multi_importer_remote_file_get', $url);
       // get only the first path.
       if (!empty($path)) {
-        if ($path[0]) { 
-          return $path[0]; 
+        if ($path[0]) {
+          return $path[0];
         }
       }
 
@@ -238,7 +244,7 @@ function islandora_multi_importer_remote_file_get($url) {
         }
       return $localfile;
     }
-      
+
     // Simulate what could be the final path of a remote download.
     // to avoid redownloading.
     $localfile = file_build_uri(drupal_basename($parsed_url['path']));
@@ -280,7 +286,7 @@ function islandora_multi_importer_remote_file_get($url) {
 function islandora_multi_importer_retrieve_remote_file($url, $destination = NULL, $replace = FILE_EXISTS_RENAME) {
     module_load_include('inc', 'islandora', 'includes/mimemtype.utils');
     // pre set a failure
-    $localfile = FALSE; 
+    $localfile = FALSE;
     $parsed_url = parse_url($url);
     $mime = 'application/octet-stream';
     if (!isset($destination)) {
@@ -304,11 +310,11 @@ function islandora_multi_importer_retrieve_remote_file($url, $destination = NULL
       )), 'error');
       return FALSE;
     }
-    
+
     // It would be more optimal to run this after saving
     // but i really need the mime in case no extension is present
     $mimefromextension = file_get_mimetype($path, NULL);
-    
+
     if (($mimefromextension == "application/octet-stream") &&
       isset($result->headers['Content-Type'])) {
       $mimetype = $result->headers['Content-Type'];
@@ -319,14 +325,14 @@ function islandora_multi_importer_retrieve_remote_file($url, $destination = NULL
       }
     }
     // File is being made managed and permanent here, will be marked as
-    // temporary once it is processed AND/OR associated with a SET 
+    // temporary once it is processed AND/OR associated with a SET
     $localfile = file_save_data($result->data, $path, $replace);
     if (!$localfile) {
       drupal_set_message(t('@remote could not be saved to @path.', array(
         '@remote' => $url,
         '@path' => $path,
       )), 'error');
-    } 
+    }
 
     return $localfile;
   }
@@ -343,9 +349,9 @@ function islandora_multi_importer_temp_directory($create = TRUE) {
     }
     return $directory;
   }
-  
+
 function islandora_multi_importer_twig_process(array $twig_input = array()) {
-  if (count($twig_input) == 0) { 
+  if (count($twig_input) == 0) {
     return;
   }
   $loader = new Twig_Loader_Array(array(
@@ -359,7 +365,7 @@ function islandora_multi_importer_twig_process(array $twig_input = array()) {
   //We won't validate here. We are here because our form did that
   $output = $twig->render($twig_input['name'], $twig_input['data']);
   //@todo catch anyway any twig error to avoid the worker to fail bad.
-  
+
   return $output;
 }
 
@@ -387,7 +393,7 @@ return $twig_template_from_db;
  *   Surprinsingly the ID of the twig template in DB.
  *
  * @return array
- * associative array with following structure 
+ * associative array with following structure
  * 'name' => the name of the template
  * 'id' => the unique integer id
  * 'twig' => the template itself
@@ -399,7 +405,7 @@ function islandora_multi_importer_twig_fetchbyid($twig_id) {
     module_load_include('inc', 'islandora_multi_importer', 'includes/TwigTemplateDatabase');
     $twig_template_info_from_db = TwigTemplateDatabase::GetbyId($twig_id);
   }
-  
+
 return $twig_template_info_from_db;
 }
 /**
@@ -477,7 +483,7 @@ function islandora_multi_importer_csv_save(array $data) {
     }
       array_walk($data['headers'],'htmlspecialchars');
       fputcsv($fh, $data['headers']);
-    
+
     foreach ($data['data'] as $row) {
       array_walk($row,'htmlspecialchars');
       fputcsv($fh, $row);
@@ -487,14 +493,14 @@ function islandora_multi_importer_csv_save(array $data) {
     $file->filesize = filesize($file->uri);
     $file->status = ~FILE_STATUS_PERMANENT;
     file_save($file);
-      
+
     // Tell the user where we stuck it
-   
+
     drupal_set_message( t('CSV file saved and available at. <a href="!url">!filename</a>.', array(
       '!url' => file_create_url($file->uri),
       '!filename' => $filename,
     )));
-    
+
     return $file->fid;
 }
 
@@ -517,14 +523,14 @@ function islandora_multi_importer_array_combine_special($header, $row) {
         for($i = 0; $i < $more; $i++) {
             $row[] = "";
         }
-    
-    } 
+
+    }
     else if ($headercount < $rowcount) {
       // more fields than headers
       // Header wins always
       $row = array_slice($row, 0, $headercount);
-    }  
-        
+    }
+
     return array_combine($header, $row);
 }
 
@@ -548,14 +554,14 @@ function islandora_multi_importer_array_equallyseize($headercount, $row) {
         for($i = 0; $i < $more; $i++) {
             $row[] = "";
         }
-    
-    } 
+
+    }
     else if ($headercount < $rowcount) {
       // more fields than headers
       // Header wins always
       $row = array_slice($row, 0, $headercount);
-    }  
-        
+    }
+
     return $row;
 }
 
@@ -565,7 +571,7 @@ function islandora_multi_importer_array_equallyseize($headercount, $row) {
  * @param string $dsid
  *   the dsid candidate
  * @return bool
- *  True if it can be used as DSID 
+ *  True if it can be used as DSID
  */
 function islandora_multi_importer_isValidXmlName($dsid) {
   $dsid = trim($dsid);
@@ -581,4 +587,3 @@ function islandora_multi_importer_isValidXmlName($dsid) {
       return FALSE;
   }
 }
-
