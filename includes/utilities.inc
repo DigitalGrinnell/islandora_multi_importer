@@ -99,16 +99,16 @@ function islandora_multi_importer_read_filedata($file_path, $numrows = 20, $offs
             // @TODO check if this is not being overriden at line 64
             break;
           }
-          $table[$rowindex] = $datarow[0];
           // MAM...if a row begins with a hashtag, it's a comment...skip it
           // This partially addresses https://github.com/mnylc/islandora_multi_importer/issues/15
+          // $table[$rowindex] = $datarow[0];  // making these two statements conditional, see below
+          // $maxRow = $rowindex;    // making these two statements conditional, see below
           if ($flat[0] != '#') {
-            $table[$rowindex] = $row[0];
+            $table[$rowindex] = $datarow[0];
             $maxRow = $rowindex;
           } 
-      // $maxRow = $rowindex;    MAM...removed as part of change which begins 6 lines above.
         }
-      }
+    }
   }
   $tabdata = array('headers' =>  $rowHeaders_utf8, 'data' => $table, 'totalrows'=> $maxRow);
   $objPHPExcel->disconnectWorksheets();
